@@ -163,15 +163,32 @@ st.markdown("""
         font-weight: bold !important;
         letter-spacing: 1px !important;
     }
+    /* ========================================= */
+    /* 📱 N109区移动端专属雷达适配 (Mobile UI) */
+    /* ========================================= */
+    @media (max-width: 768px) {
+        h1 { font-size: 1.8rem !important; text-align: center; }
+        h3 { font-size: 1.3rem !important; text-align: center; }
+        /* 修复部分手机浏览器背景图固定失效的问题 */
+        .stApp { background-attachment: scroll !important; } 
+        /* 让音乐播放器在手机上居中且占满宽度 */
+        [data-testid="stAudio"] { width: 100% !important; margin: 0 auto 20px auto !important; }
+        /* 手机端信号卡片稍微紧凑一点 */
+        .signal-card { padding: 10px; margin-bottom: 10px; }
+    }
+
 
     </style>
 """, unsafe_allow_html=True)
 
 st.title("🏍️ N109区点亮计划")
 
-# 🦅 专属 BGM 播放器
+# 🦅 专属 BGM 播放器 (修复云端断连Bug)
 try:
-    st.audio("bgm.mp3", format="audio/mpeg", loop=True)
+    # 强制把音乐读进内存，彻底解决云端 not connected 报错！
+    with open("bgm.mp3", "rb") as f:
+        audio_bytes = f.read()
+    st.audio(audio_bytes, format="audio/mpeg", loop=True)
     
     # 🦅 N109区底层控制指令：强制将初始音量设为 50%
     components.html(
@@ -179,9 +196,8 @@ try:
         <script>
             const setVolume = () => {
                 const audios = window.parent.document.querySelectorAll('audio');
-                audios.forEach(a => { a.volume = 0.5; }); // 0.5 就是 50% 音量
+                audios.forEach(a => { a.volume = 0.5; });
             };
-            // 连续发送几次指令，确保播放器一出现就被强行调低音量！
             setTimeout(setVolume, 100);
             setTimeout(setVolume, 500);
             setTimeout(setVolume, 1000);
@@ -189,8 +205,9 @@ try:
         """,
         height=0, width=0
     )
-except:
-    st.warning("⚠️ 未检测到 bgm.mp3 文件，请确认音乐文件已放入文件夹！")
+except Exception as e:
+    st.warning(f"⚠️ BGM 加载失败: {e}")
+
 
 
 def fetch_data():
