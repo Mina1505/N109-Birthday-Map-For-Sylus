@@ -179,8 +179,13 @@ try:
         """
         <script>
             const setVolume = () => {
-                const audios = window.parent.document.querySelectorAll('audio');
-                audios.forEach(a => { a.volume = 0.5; });
+                try {
+                    // 🦅 加上 try-catch 防弹衣，防止手机端 Safari 严格模式报错卡死网页！
+                    const audios = window.parent.document.querySelectorAll('audio');
+                    audios.forEach(a => { a.volume = 0.5; });
+                } catch (e) {
+                    console.log("移动端音量控制被拦截，已忽略");
+                }
             };
             setTimeout(setVolume, 100);
             setTimeout(setVolume, 500);
