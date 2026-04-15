@@ -256,8 +256,19 @@ blessings_data = fetch_data()
 
 with col1:
     st.markdown("### 🔴 为你闪烁的满城夜色")
+    
+    # 🦅 防线一：给手机端猎人的温馨提示
+    st.markdown("<span style='color:#68aacd; font-size:0.85em;'>*📡 信号微弱时雷达可能隐匿。若未看到地图，请点击下方按钮重连。*</span>", unsafe_allow_html=True)
+    
+    # 🦅 防线二：赛博朋克风的强制重连按钮
+    if st.button("🔄 重新扫描 N109 区雷达"):
+        st.rerun()
+        
     map_html = render_map(blessings_data)
-    components.html(map_html, height=520)
+    
+    # 🦅 防线三：增加 iframe 高度，并关闭滚动条防止手机端滑动冲突
+    components.html(map_html, height=550, scrolling=False)
+
 
 with col2:
     st.markdown("### 📡 接入N109区频段")
