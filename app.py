@@ -80,7 +80,6 @@ st.markdown("""
     h1, h2, h3 {font-family: 'Orbitron', 'Noto Sans SC', sans-serif !important; color: #ff004d !important; text-shadow: 0 0 15px rgba(255, 0, 77, 0.8); letter-spacing: 1px;}
     .stApp {background: linear-gradient(135deg, #050208 0%, #0a0510 50%, #1a050a 100%); color: #e0d8e0;}
     
-    /* 强制黑化所有输入框和下拉菜单 */
     [data-baseweb="input"], [data-baseweb="input"] > div, [data-baseweb="input"] input,
     [data-baseweb="textarea"], [data-baseweb="textarea"] > div, [data-baseweb="textarea"] textarea,
     [data-baseweb="select"] > div {
@@ -200,7 +199,8 @@ except Exception as e:
 
 def fetch_data():
     try:
-        response = supabase.table("blessings").select("*").execute()
+        # 🦅 突破 1000 条限制！强行拉取最高 10000 条数据！(乌克兰小狸花回归！)
+        response = supabase.table("blessings").select("*").limit(10000).execute()
         data = response.data
         if data: data.reverse()
         return data
@@ -289,8 +289,17 @@ with col2:
             manual_lat_abs = st.number_input("纬度数值", value=0.00, format="%.2f", min_value=0.0, max_value=90.0)
             
         message = st.text_area("你想对秦彻说的话")
-        submitted = st.form_submit_button("锁定并点亮坐标")
         
+        # 🦅 终极 UI 优化：双核按钮并排！
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            submitted = st.form_submit_button("锁定并点亮坐标", use_container_width=True)
+        with col_btn2:
+            fireworks_clicked = st.form_submit_button("🪶 想看礼花吗", use_container_width=True)
+        
+        # ==========================================
+        # 逻辑 1：如果点击了【锁定并点亮坐标】
+        # ==========================================
         if submitted:
             if not name or not city:
                 st.warning("⚠️ 代号和城市不能为空哦！")
@@ -321,6 +330,69 @@ with col2:
                         st.rerun()
                 else:
                     st.error(f"❌ 乌鸦矩阵未收录【{city}】！请手动输入经纬度！")
+
+        # ==========================================
+        # 逻辑 2：如果点击了【🪶 想看礼花吗】
+        # ==========================================
+        if fireworks_clicked:
+            if blessings_data:
+                lucky_hunter = random.choice(blessings_data)
+                lucky_city = lucky_hunter.get('city', '未知坐标')
+                lucky_msg = lucky_hunter.get('message', '秦彻，生日快乐！')
+                
+                components.html(
+                    f"""
+                    <script>
+                        const parentDoc = window.parent.document;
+                        const oldOverlay = parentDoc.getElementById('sylus-fireworks');
+                        if(oldOverlay) oldOverlay.remove();
+
+                        const overlay = parentDoc.createElement('div');
+                        overlay.id = 'sylus-fireworks';
+                        overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:99999; pointer-events:none; display:flex; justify-content:center; align-items:center; overflow:hidden; background:rgba(10,5,16,0.6);';
+                        
+                        const card = parentDoc.createElement('div');
+                        card.style.cssText = 'background:rgba(21,10,31,0.95); border:2px solid #ff004d; padding:40px; border-radius:12px; box-shadow:0 0 40px rgba(255,0,77,0.6), inset 0 0 20px rgba(192,249,255,0.2); text-align:center; max-width:80%; z-index:100000; animation: popIn 0.5s ease-out;';
+                        
+                        // 🦅 电影台词感排版！(隐藏猎人代号，保护隐私)
+                        card.innerHTML = `
+                            <p style="color:#e0d8e0; font-size:1.6em; font-style:italic; line-height:1.5; text-shadow:0 0 5px rgba(255,255,255,0.3); margin-bottom: 20px;">
+                                "${lucky_msg}"
+                            </p>
+                            <p style="color:#c0f9ff; font-size:1.1em; font-weight:bold; text-shadow:0 0 10px #c0f9ff; text-align:right;">
+                                —— (来自 ${lucky_city})
+                            </p>
+                        `;
+                        overlay.appendChild(card);
+
+                        const elements = ['🪶', '🪶', '🪶', '🟥', '🩸'];
+                        for(let i=0; i<60; i++) {{
+                            const particle = parentDoc.createElement('div');
+                            particle.innerText = elements[Math.floor(Math.random() * elements.length)];
+                            particle.style.cssText = `position:absolute; top:-50px; left:${{Math.random()*100}}vw; font-size:${{Math.random()*20 + 15}}px; opacity:${{Math.random()*0.8 + 0.2}}; transform:rotate(${{Math.random()*360}}deg); transition:top 4s linear, left 4s ease-in-out;`;
+                            overlay.appendChild(particle);
+                            
+                            setTimeout(() => {{
+                                particle.style.top = '120vh';
+                                particle.style.left = `${{parseFloat(particle.style.left) + (Math.random()*20 - 10)}}vw`;
+                                particle.style.transform = `rotate(${{Math.random()*720}}deg)`;
+                            }}, 50);
+                        }}
+
+                        parentDoc.body.appendChild(overlay);
+
+                        // 🦅 精确到 4.18 秒后瞬间销毁！
+                        setTimeout(() => {{
+                            if(parentDoc.getElementById('sylus-fireworks')) {{
+                                parentDoc.getElementById('sylus-fireworks').remove();
+                            }}
+                        }}, 4180);
+                    </script>
+                    """,
+                    height=0, width=0
+                )
+            else:
+                st.warning("雷达尚未截获任何信号，无法释放礼花！")
 
 # ==========================================
 # 🦅 底部信号瀑布流展示区
