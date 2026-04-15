@@ -1,5 +1,6 @@
 import base64
 import time
+import html 
 import streamlit as st
 import streamlit.components.v1 as components
 from pyecharts import options as opts
@@ -199,7 +200,6 @@ except Exception as e:
 
 def fetch_data():
     try:
-        # 🦅 突破 1000 条限制！强行拉取最高 10000 条数据！
         response = supabase.table("blessings").select("*").limit(10000).execute()
         data = response.data
         if data: data.reverse()
@@ -217,7 +217,7 @@ def save_data(name, city, lon, lat, message):
         st.error(f"⚠️ 数据库写入失败: {e}")
         return False
 
-# --- Pyecharts 赤红呼吸灯地图 (双层特效升级版) ---
+# --- Pyecharts 赤红呼吸灯地图 (智能混合渲染版) ---
 def render_map(data_list):
     geo = (
         Geo(init_opts=opts.InitOpts(width="100%", height="500px", theme=ThemeType.DARK, bg_color="transparent"))
@@ -233,7 +233,15 @@ def render_map(data_list):
     last_coord = st.session_state.get('last_coord')
 
     if data_list:
-        for i, item in enumerate(data_list):
+        # 🦅 核心魔法：提取最新的 500 个 + 随机抽取剩余的 1000 个
+        newest_500 = data_list[:500]
+        remaining_data = data_list[500:]
+        random_1000 = random.sample(remaining_data, min(1000, len(remaining_data))) if remaining_data else []
+        
+        # 合并成最终要在地图上渲染的 1500 个坐标
+        map_display_data = newest_500 + random_1000
+
+        for i, item in enumerate(map_display_data):
             lon = item.get('longitude', 0)
             lat = item.get('latitude', 0)
             unique_city_id = f"{item.get('city', 'Unknown')}_{i}"
@@ -275,7 +283,6 @@ with col2:
         
         st.markdown("<span style='color:#885566; font-size:0.85em;'>*注：非省会城市无法定位，请手动输入经纬度*</span>", unsafe_allow_html=True)
         
-        # 🦅 升级版：防呆经纬度输入（增加东西南北下拉框）
         col_lon_dir, col_lon_val = st.columns([1, 2])
         with col_lon_dir:
             lon_dir = st.selectbox("经度方向", ["东经 (E)", "西经 (W)"])
@@ -290,16 +297,12 @@ with col2:
             
         message = st.text_area("你想对秦彻说的话")
         
-        # 🦅 终极 UI 优化：双核按钮并排！
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
             submitted = st.form_submit_button("锁定并点亮坐标", use_container_width=True)
         with col_btn2:
             fireworks_clicked = st.form_submit_button("🪶 想看礼花吗", use_container_width=True)
         
-        # ==========================================
-        # 逻辑 1：如果点击了【锁定并点亮坐标】
-        # ==========================================
         if submitted:
             if not name or not city:
                 st.warning("⚠️ 代号和城市不能为空哦！")
@@ -330,16 +333,14 @@ with col2:
                 else:
                     st.error(f"❌ 乌鸦矩阵未收录【{city}】！请手动输入经纬度！")
 
-        # ==========================================
-        # 逻辑 2：如果点击了【🪶 想看礼花吗】
-        # ==========================================
         if fireworks_clicked:
             if blessings_data:
                 lucky_hunter = random.choice(blessings_data)
-                lucky_city = lucky_hunter.get('city', '未知坐标')
-                lucky_msg = lucky_hunter.get('message', '秦彻，生日快乐！')
                 
-                # 🦅 物理粒子爆炸引擎 (已修复大括号转义问题)
+                raw_msg = lucky_hunter.get('message', '秦彻，生日快乐！')
+                safe_msg = html.escape(raw_msg).replace('\n', '<br>')
+                safe_city = html.escape(lucky_hunter.get('city', '未知坐标'))
+                
                 components.html(
                     f"""
                     <script>
@@ -357,10 +358,10 @@ with col2:
                         card.innerHTML = `
                             <style>@keyframes popCard {{ to {{ transform:scale(1); }} }}</style>
                             <p style="color:#e0d8e0; font-size:1.6em; font-style:italic; line-height:1.5; text-shadow:0 0 5px rgba(255,255,255,0.3); margin-bottom: 20px;">
-                                "{lucky_msg}"
+                                "{safe_msg}"
                             </p>
                             <p style="color:#c0f9ff; font-size:1.1em; font-weight:bold; text-shadow:0 0 10px #c0f9ff; text-align:right;">
-                                —— (来自 {lucky_city})
+                                —— (来自 {safe_city})
                             </p>
                         `;
                         overlay.appendChild(card);
