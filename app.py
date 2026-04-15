@@ -47,13 +47,10 @@ def get_coordinates(city_name):
     return None, None
 
 # ==========================================
-# 🎨 N109区机车霓虹版 UI 深度定制 (终极视觉版 9.0)
+# 🎨 N109区机车霓虹版 UI 深度定制
 # ==========================================
 st.set_page_config(page_title="N109区点亮计划", layout="wide", initial_sidebar_state="collapsed")
 
-# ==========================================
-# 🦅 注入专属雨夜机车背景图
-# ==========================================
 def set_bg_image(image_file):
     try:
         with open(image_file, "rb") as f:
@@ -312,45 +309,24 @@ with col2:
                     st.error(f"❌ 乌鸦矩阵未收录【{city}】！请手动输入经纬度！")
 
 # ==========================================
-# 🦅 底部：暗网加密终端 (固定高度滚动舱)
+# 🦅 底部信号瀑布流展示区 (还原绝美三列排版)
 # ==========================================
 st.markdown("---")
-st.markdown('### <span class="live-dot"></span>N109区机密档案终端 (实时拦截)', unsafe_allow_html=True)
+st.markdown('### <span class="live-dot"></span>截获的猎人小姐信号 (实时)', unsafe_allow_html=True)
 
 if blessings_data:
-    # 注入终端专属 CSS (带暗红滚动条)
-    terminal_html = """
-    <style>
-    .cyber-terminal::-webkit-scrollbar { width: 6px; }
-    .cyber-terminal::-webkit-scrollbar-track { background: rgba(10, 5, 16, 0.8); }
-    .cyber-terminal::-webkit-scrollbar-thumb { background: #ff004d; border-radius: 3px; }
-    .cyber-terminal {
-        height: 450px; 
-        overflow-y: auto; 
-        border: 1px solid #4a1525; 
-        background: rgba(15, 5, 20, 0.7); 
-        padding: 20px; 
-        border-radius: 8px; 
-        box-shadow: inset 0 0 30px rgba(255, 0, 77, 0.1);
-    }
-    </style>
-    <div class="cyber-terminal">
-    """
-    
-    # 把所有留言塞进终端里
-    for item in blessings_data:
-        terminal_html += f"""
-        <div class="signal-card" style="margin-bottom: 15px;">
-            <div class="signal-header">
-                {item.get('name', '未知猎人')} 
-                <span class="signal-city">📍 {item.get('city', '未知坐标')}</span>
+    display_data = blessings_data[:12] 
+    cols = st.columns(3)
+    for i, item in enumerate(display_data):
+        with cols[i % 3]:
+            st.markdown(f"""
+            <div class="signal-card">
+                <div class="signal-header">
+                    {item.get('name', '未知猎人')} 
+                    <span class="signal-city">📍 {item.get('city', '未知坐标')}</span>
+                </div>
+                <div class="signal-msg">"{item.get('message', '发送了一段加密信号...')}"</div>
             </div>
-            <div class="signal-msg">"{item.get('message', '发送了一段加密信号...')}"</div>
-        </div>
-        """
-    terminal_html += "</div>"
-    
-    # 渲染终端
-    st.markdown(terminal_html, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 else:
     st.markdown("<p style='color:#885566;'>当前频段安静，等待第一位猎人接入...</p>", unsafe_allow_html=True)
