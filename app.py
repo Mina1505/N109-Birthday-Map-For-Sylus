@@ -9,7 +9,7 @@ from supabase import create_client, Client
 import random
 
 # ==========================================
-# 🔴 猎人请注意：填入你的 Supabase 密钥！
+# 🔴 Supabase 密钥配置
 # ==========================================
 SUPABASE_URL = "https://yqggxqllcutqatwjxmyx.supabase.co"
 SUPABASE_KEY = "sb_publishable_66sM5garleFYSyoxfoBizg_WeoUpnAy"
@@ -80,11 +80,10 @@ st.markdown("""
     h1, h2, h3 {font-family: 'Orbitron', 'Noto Sans SC', sans-serif !important; color: #ff004d !important; text-shadow: 0 0 15px rgba(255, 0, 77, 0.8); letter-spacing: 1px;}
     .stApp {background: linear-gradient(135deg, #050208 0%, #0a0510 50%, #1a050a 100%); color: #e0d8e0;}
     
-        /* 🦅 强制黑化所有输入框和下拉菜单 */
+    /* 强制黑化所有输入框和下拉菜单 */
     [data-baseweb="input"], [data-baseweb="input"] > div, [data-baseweb="input"] input,
     [data-baseweb="textarea"], [data-baseweb="textarea"] > div, [data-baseweb="textarea"] textarea,
     [data-baseweb="select"] > div {
-
         background-color: rgba(21, 10, 31, 0.8) !important;
         color: #ffb3c6 !important;
         -webkit-text-fill-color: #ffb3c6 !important; 
@@ -153,7 +152,7 @@ st.markdown("""
     
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     
-    .stTextInput label p, .stTextArea label p, .stNumberInput label p {
+    .stTextInput label p, .stTextArea label p, .stNumberInput label p, .stSelectbox label p {
         color: #c0f9ff !important; 
         text-shadow: 0 0 8px rgba(192, 249, 255, 0.6) !important; 
         font-weight: bold !important;
@@ -172,7 +171,7 @@ st.markdown("""
 
 st.title("🏍️ N109区点亮计划")
 
-# 🦅 专属 BGM 播放器
+# 🦅 专属 BGM 播放器 (带手机端防崩溃)
 try:
     with open("bgm.mp3", "rb") as f:
         audio_bytes = f.read()
@@ -183,7 +182,6 @@ try:
         <script>
             const setVolume = () => {
                 try {
-                    // 🦅 加上 try-catch 防弹衣，防止手机端 Safari 严格模式报错卡死网页！
                     const audios = window.parent.document.querySelectorAll('audio');
                     audios.forEach(a => { a.volume = 0.5; });
                 } catch (e) {
@@ -241,17 +239,14 @@ def render_map(data_list):
             unique_city_id = f"{item.get('city', 'Unknown')}_{i}"
             geo.add_coordinate(unique_city_id, lon, lat)
             
-            # 🦅 核心魔法：判断是不是刚刚发送的专属坐标
             if last_coord and abs(lon - last_coord[0]) < 0.0001 and abs(lat - last_coord[1]) < 0.0001:
                 highlight_pair.append((unique_city_id, 1))
             else:
                 normal_pair.append((unique_city_id, 1))
                 
-        # 第一层：普通猎人的暗红星团
         if normal_pair:
             geo.add("乌鸦芯片定位", normal_pair, type_=ChartType.EFFECT_SCATTER, symbol_size=8, color="#ff004d", effect_opts=opts.EffectOpts(is_show=True, brush_type="stroke", scale=3, period=2.5), label_opts=opts.LabelOpts(is_show=False))
         
-        # 第二层：你的专属银白锁定 (超大涟漪)
         if highlight_pair:
             geo.add("🎯 专属锁定", highlight_pair, type_=ChartType.EFFECT_SCATTER, symbol_size=18, color="#C0C0C0", effect_opts=opts.EffectOpts(is_show=True, brush_type="stroke", scale=6, period=1.5), label_opts=opts.LabelOpts(is_show=False))
             
@@ -264,19 +259,13 @@ blessings_data = fetch_data()
 
 with col1:
     st.markdown("### 🔴 为你闪烁的满城夜色")
-    
-    # 🦅 防线一：给手机端猎人的温馨提示
     st.markdown("<span style='color:#68aacd; font-size:0.85em;'>*📡 信号微弱时雷达可能隐匿。若未看到地图，请点击下方按钮重连。*</span>", unsafe_allow_html=True)
     
-    # 🦅 防线二：赛博朋克风的强制重连按钮
     if st.button("🔄 重新扫描 N109 区雷达"):
         st.rerun()
         
     map_html = render_map(blessings_data)
-    
-    # 🦅 防线三：增加 iframe 高度，并关闭滚动条防止手机端滑动冲突
     components.html(map_html, height=550, scrolling=False)
-
 
 with col2:
     st.markdown("### 📡 接入N109区频段")
@@ -300,11 +289,41 @@ with col2:
             manual_lat_abs = st.number_input("纬度数值", value=0.00, format="%.2f", min_value=0.0, max_value=90.0)
             
         message = st.text_area("你想对秦彻说的话")
-        submitted = st.form_submit_button("锁定并点亮坐标
+        submitted = st.form_submit_button("锁定并点亮坐标")
+        
+        if submitted:
+            if not name or not city:
+                st.warning("⚠️ 代号和城市不能为空哦！")
+            else:
+                final_lon, final_lat = get_coordinates(city)
+                if final_lon is None and final_lat is None:
+                    if manual_lon_abs != 0.00 or manual_lat_abs != 0.00:
+                        # 🦅 核心魔法：根据下拉框自动转换正负号！
+                        final_lon = manual_lon_abs if lon_dir == "东经 (E)" else -manual_lon_abs
+                        final_lat = manual_lat_abs if lat_dir == "北纬 (N)" else -manual_lat_abs
+                
+                if final_lon is not None and final_lat is not None:
+                    jitter_lon = random.uniform(-0.05, 0.05)
+                    jitter_lat = random.uniform(-0.05, 0.05)
+                    final_lon += jitter_lon
+                    final_lat += jitter_lat
 
+                    success = save_data(name, city, final_lon, final_lat, message)
+                    if success:
+                        st.session_state['last_coord'] = (final_lon, final_lat)
+                        st.markdown(f"""
+                        <div style="background: rgba(21, 10, 31, 0.8); border: 1px solid #c0f9ff; border-left: 4px solid #c0f9ff; padding: 15px; border-radius: 4px; box-shadow: 0 0 15px rgba(192, 249, 255, 0.2); margin-bottom: 15px;">
+                            <span style="color: #c0f9ff; font-weight: bold; font-size: 1.1em;">🛰️ 信号接入成功！</span><br>
+                            <span style="color: #e0d8e0; font-size: 0.95em;">猎人 <span style="color: #ff004d; font-weight: bold;">{name}</span>，坐标已锁定！雷达正在重启...</span>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        time.sleep(1.5)
+                        st.rerun()
+                else:
+                    st.error(f"❌ 乌鸦矩阵未收录【{city}】！请手动输入经纬度！")
 
 # ==========================================
-# 🦅 底部信号瀑布流展示区 (还原绝美三列排版)
+# 🦅 底部信号瀑布流展示区
 # ==========================================
 st.markdown("---")
 st.markdown('### <span class="live-dot"></span>截获的猎人小姐信号 (实时)', unsafe_allow_html=True)
