@@ -284,7 +284,7 @@ with col2:
         name = st.text_input("猎人代号")
         city = st.text_input("所在城市 (如: 上海, 伦敦, 纽约)")
         
-                st.markdown("<span style='color:#885566; font-size:0.85em;'>*注：非省会城市无法定位，请手动输入经纬度*</span>", unsafe_allow_html=True)
+        st.markdown("<span style='color:#885566; font-size:0.85em;'>*注：非省会城市无法定位，请手动输入经纬度*</span>", unsafe_allow_html=True)
         
         # 🦅 升级版：防呆经纬度输入（增加东西南北下拉框）
         col_lon_dir, col_lon_val = st.columns([1, 2])
@@ -300,39 +300,8 @@ with col2:
             manual_lat_abs = st.number_input("纬度数值", value=0.00, format="%.2f", min_value=0.0, max_value=90.0)
             
         message = st.text_area("你想对秦彻说的话")
-        submitted = st.form_submit_button("锁定并点亮坐标")
-        
-        if submitted:
-            if SUPABASE_URL == "你的Project_URL":
-                st.error("⚠️ 猎人！你忘记填 Supabase 密钥啦！")
-            elif not name or not city:
-                st.warning("⚠️ 代号和城市不能为空哦！")
-            else:
-                final_lon, final_lat = get_coordinates(city)
-                if final_lon is None and final_lat is None:
-                    if manual_lon_abs != 0.00 or manual_lat_abs != 0.00:
-                        # 🦅 核心魔法：根据下拉框自动转换正负号！
-                        final_lon = manual_lon_abs if lon_dir == "东经 (E)" else -manual_lon_abs
-                        final_lat = manual_lat_abs if lat_dir == "北纬 (N)" else -manual_lat_abs
+        submitted = st.form_submit_button("锁定并点亮坐标
 
-
-                    success = save_data(name, city, final_lon, final_lat, message)
-                    if success:
-                        # 记录专属坐标
-                        st.session_state['last_coord'] = (final_lon, final_lat)
-                        
-                        st.markdown(f"""
-                        <div style="background: rgba(21, 10, 31, 0.8); border: 1px solid #c0f9ff; border-left: 4px solid #c0f9ff; padding: 15px; border-radius: 4px; box-shadow: 0 0 15px rgba(192, 249, 255, 0.2); margin-bottom: 15px;">
-                            <span style="color: #c0f9ff; font-weight: bold; font-size: 1.1em;">🛰️ 信号接入成功！</span><br>
-                            <span style="color: #e0d8e0; font-size: 0.95em;">猎人 <span style="color: #ff004d; font-weight: bold;">{name}</span>，坐标已锁定！雷达正在重启...</span>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # 🦅 强制瞬间刷新网页，让银色高亮立刻出现！
-                        time.sleep(1.5)
-                        st.rerun()
-                else:
-                    st.error(f"❌ 乌鸦矩阵未收录【{city}】！请手动输入经纬度！")
 
 # ==========================================
 # 🦅 底部信号瀑布流展示区 (还原绝美三列排版)
