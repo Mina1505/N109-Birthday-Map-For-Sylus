@@ -171,7 +171,7 @@ st.markdown("""
 
 st.title("🏍️ N109区点亮计划")
 
-# 🦅 专属 BGM 播放器 (带手机端防崩溃)
+# 🦅 专属 BGM 播放器
 try:
     with open("bgm.mp3", "rb") as f:
         audio_bytes = f.read()
@@ -217,7 +217,7 @@ def save_data(name, city, lon, lat, message):
         st.error(f"⚠️ 数据库写入失败: {e}")
         return False
 
-# --- Pyecharts 赤红呼吸灯地图 (智能混合渲染版) ---
+# --- Pyecharts 赤红呼吸灯地图 ---
 def render_map(data_list):
     geo = (
         Geo(init_opts=opts.InitOpts(width="100%", height="500px", theme=ThemeType.DARK, bg_color="transparent"))
@@ -233,12 +233,9 @@ def render_map(data_list):
     last_coord = st.session_state.get('last_coord')
 
     if data_list:
-        # 🦅 核心魔法：提取最新的 500 个 + 随机抽取剩余的 1000 个
         newest_500 = data_list[:500]
         remaining_data = data_list[500:]
         random_1000 = random.sample(remaining_data, min(1000, len(remaining_data))) if remaining_data else []
-        
-        # 合并成最终要在地图上渲染的 1500 个坐标
         map_display_data = newest_500 + random_1000
 
         for i, item in enumerate(map_display_data):
@@ -341,6 +338,7 @@ with col2:
                 safe_msg = html.escape(raw_msg).replace('\n', '<br>')
                 safe_city = html.escape(lucky_hunter.get('city', '未知坐标'))
                 
+                # 🦅 终极赛博粒子爆炸引擎 + 半透明毛玻璃卡片
                 components.html(
                     f"""
                     <script>
@@ -350,61 +348,51 @@ with col2:
 
                         const overlay = parentDoc.createElement('div');
                         overlay.id = 'sylus-fireworks';
-                        overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:99999; pointer-events:none; display:flex; justify-content:center; align-items:center; overflow:hidden; background:rgba(10,5,16,0.6);';
+                        overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:99999; pointer-events:none; display:flex; justify-content:center; align-items:center; overflow:hidden; background:rgba(5,2,10,0.5); backdrop-filter:blur(3px);';
                         
                         const card = parentDoc.createElement('div');
-                        card.style.cssText = 'background:rgba(21,10,31,0.95); border:2px solid #ff004d; padding:40px; border-radius:12px; box-shadow:0 0 40px rgba(255,0,77,0.6), inset 0 0 20px rgba(192,249,255,0.2); text-align:center; max-width:80%; z-index:100000; transform:scale(0); animation:popCard 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;';
+                        // 🦅 赛博朋克半透明毛玻璃质感
+                        card.style.cssText = 'background:rgba(15,5,20,0.65); backdrop-filter:blur(12px); border:1px solid rgba(255,0,77,0.5); padding:40px; border-radius:16px; box-shadow:0 0 40px rgba(255,0,77,0.4), inset 0 0 20px rgba(192,249,255,0.1); text-align:center; max-width:80%; z-index:100000; transform:scale(0); animation:popCard 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;';
                         
                         card.innerHTML = `
                             <style>@keyframes popCard {{ to {{ transform:scale(1); }} }}</style>
-                            <p style="color:#e0d8e0; font-size:1.6em; font-style:italic; line-height:1.5; text-shadow:0 0 5px rgba(255,255,255,0.3); margin-bottom: 20px;">
+                            <p style="color:#e0d8e0; font-size:1.6em; font-style:italic; line-height:1.5; text-shadow:0 0 8px rgba(255,255,255,0.4); margin-bottom: 20px;">
                                 "{safe_msg}"
                             </p>
-                            <p style="color:#c0f9ff; font-size:1.1em; font-weight:bold; text-shadow:0 0 10px #c0f9ff; text-align:right;">
+                            <p style="color:#c0f9ff; font-size:1.1em; font-weight:bold; text-shadow:0 0 12px #c0f9ff; text-align:right;">
                                 —— (来自 {safe_city})
                             </p>
                         `;
                         overlay.appendChild(card);
 
-                        const elements = ['🪶', '✦', '🩸', ''];
-                        const colors = ['#ff004d', '#000000', '#c0f9ff', '#4a1525'];
-                        
-                        for(let i=0; i<80; i++) {{
+                        // 🦅 纯粹的发光粒子爆炸系统
+                        const colors = ['#ff004d', '#c0f9ff', '#ffffff', '#ff4b4b'];
+                        for(let i=0; i<120; i++) {{
                             const p = parentDoc.createElement('div');
-                            const isText = Math.random() > 0.4;
-                            if(isText) {{
-                                p.innerText = elements[Math.floor(Math.random() * elements.length)];
-                                p.style.fontSize = (Math.random()*15 + 10) + 'px';
-                            }} else {{
-                                p.style.width = (Math.random()*8 + 4) + 'px';
-                                p.style.height = (Math.random()*8 + 4) + 'px';
-                                p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                                p.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
-                            }}
+                            const size = Math.random() * 5 + 2; // 2px 到 7px 的发光点
+                            const color = colors[Math.floor(Math.random() * colors.length)];
+                            
+                            p.style.cssText = `position:absolute; width:${{size}}px; height:${{size}}px; background-color:${{color}}; border-radius:50%; box-shadow:0 0 ${{size*2}}px ${{color}}; z-index:99998;`;
                             
                             const angle = Math.random() * Math.PI * 2;
-                            const velocity = Math.random() * 25 + 10; 
+                            const velocity = Math.random() * 25 + 5; 
                             let vx = Math.cos(angle) * velocity;
-                            let vy = Math.sin(angle) * velocity - 15; 
+                            let vy = Math.sin(angle) * velocity - 12; 
                             let x = window.innerWidth / 2;
                             let y = window.innerHeight / 2;
-                            let rot = Math.random() * 360;
-                            let rotSpeed = Math.random() * 10 - 5;
                             
-                            p.style.position = 'absolute';
                             p.style.left = x + 'px';
                             p.style.top = y + 'px';
-                            p.style.zIndex = 99998;
                             overlay.appendChild(p);
                             
                             const update = () => {{
-                                vy += 0.8; 
+                                vy += 0.6; // 重力
                                 x += vx;
                                 y += vy;
-                                rot += rotSpeed;
-                                p.style.transform = `translate(-50%, -50%) rotate(${{rot}}deg)`;
                                 p.style.left = x + 'px';
                                 p.style.top = y + 'px';
+                                // 粒子随下落逐渐变暗消失
+                                p.style.opacity = Math.max(0, (window.innerHeight + 100 - y) / window.innerHeight);
                                 
                                 if(y < window.innerHeight + 100) {{
                                     requestAnimationFrame(update);
@@ -417,9 +405,9 @@ with col2:
 
                         setTimeout(() => {{
                             if(parentDoc.getElementById('sylus-fireworks')) {{
-                                parentDoc.getElementById('sylus-fireworks').style.transition = 'opacity 0.5s';
+                                parentDoc.getElementById('sylus-fireworks').style.transition = 'opacity 0.6s ease-out';
                                 parentDoc.getElementById('sylus-fireworks').style.opacity = '0';
-                                setTimeout(() => parentDoc.getElementById('sylus-fireworks').remove(), 500);
+                                setTimeout(() => parentDoc.getElementById('sylus-fireworks').remove(), 600);
                             }}
                         }}, 4180);
                     </script>
