@@ -352,10 +352,11 @@ with col2:
                         overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:99999; pointer-events:none; display:flex; justify-content:center; align-items:center; overflow:hidden; background:rgba(10,5,16,0.6);';
                         
                         const card = parentDoc.createElement('div');
-                        card.style.cssText = 'background:rgba(21,10,31,0.95); border:2px solid #ff004d; padding:40px; border-radius:12px; box-shadow:0 0 40px rgba(255,0,77,0.6), inset 0 0 20px rgba(192,249,255,0.2); text-align:center; max-width:80%; z-index:100000; animation: popIn 0.5s ease-out;';
+                        // 🦅 卡片增加 Q弹的弹出动画
+                        card.style.cssText = 'background:rgba(21,10,31,0.95); border:2px solid #ff004d; padding:40px; border-radius:12px; box-shadow:0 0 40px rgba(255,0,77,0.6), inset 0 0 20px rgba(192,249,255,0.2); text-align:center; max-width:80%; z-index:100000; transform:scale(0); animation:popCard 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;';
                         
-                        // 🦅 电影台词感排版！(隐藏猎人代号，保护隐私)
                         card.innerHTML = `
+                            <style>@keyframes popCard { to { transform:scale(1); } }</style>
                             <p style="color:#e0d8e0; font-size:1.6em; font-style:italic; line-height:1.5; text-shadow:0 0 5px rgba(255,255,255,0.3); margin-bottom: 20px;">
                                 "${lucky_msg}"
                             </p>
@@ -365,28 +366,66 @@ with col2:
                         `;
                         overlay.appendChild(card);
 
-                        const elements = ['🪶', '🪶', '🪶', '🟥', '🩸'];
-                        for(let i=0; i<60; i++) {{
-                            const particle = parentDoc.createElement('div');
-                            particle.innerText = elements[Math.floor(Math.random() * elements.length)];
-                            particle.style.cssText = `position:absolute; top:-50px; left:${{Math.random()*100}}vw; font-size:${{Math.random()*20 + 15}}px; opacity:${{Math.random()*0.8 + 0.2}}; transform:rotate(${{Math.random()*360}}deg); transition:top 4s linear, left 4s ease-in-out;`;
-                            overlay.appendChild(particle);
+                        // 🦅 核心：物理粒子爆炸引擎
+                        const elements = ['🪶', '✦', '🩸', ''];
+                        const colors = ['#ff004d', '#000000', '#c0f9ff', '#4a1525'];
+                        
+                        for(let i=0; i<80; i++) {
+                            const p = parentDoc.createElement('div');
+                            const isText = Math.random() > 0.4;
+                            if(isText) {
+                                p.innerText = elements[Math.floor(Math.random() * elements.length)];
+                                p.style.fontSize = (Math.random()*15 + 10) + 'px';
+                            } else {
+                                p.style.width = (Math.random()*8 + 4) + 'px';
+                                p.style.height = (Math.random()*8 + 4) + 'px';
+                                p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                                p.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                            }
                             
-                            setTimeout(() => {{
-                                particle.style.top = '120vh';
-                                particle.style.left = `${{parseFloat(particle.style.left) + (Math.random()*20 - 10)}}vw`;
-                                particle.style.transform = `rotate(${{Math.random()*720}}deg)`;
-                            }}, 50);
-                        }}
+                            // 物理参数：爆炸角度、力度、重力
+                            const angle = Math.random() * Math.PI * 2;
+                            const velocity = Math.random() * 25 + 10; 
+                            let vx = Math.cos(angle) * velocity;
+                            let vy = Math.sin(angle) * velocity - 15; // 初始向上喷射的力
+                            let x = window.innerWidth / 2;
+                            let y = window.innerHeight / 2;
+                            let rot = Math.random() * 360;
+                            let rotSpeed = Math.random() * 10 - 5;
+                            
+                            p.style.position = 'absolute';
+                            p.style.left = x + 'px';
+                            p.style.top = y + 'px';
+                            p.style.zIndex = 99998;
+                            overlay.appendChild(p);
+                            
+                            // 动画帧刷新
+                            const update = () => {
+                                vy += 0.8; // 重力加速度
+                                x += vx;
+                                y += vy;
+                                rot += rotSpeed;
+                                p.style.transform = `translate(-50%, -50%) rotate(${rot}deg)`;
+                                p.style.left = x + 'px';
+                                p.style.top = y + 'px';
+                                
+                                if(y < window.innerHeight + 100) {
+                                    requestAnimationFrame(update);
+                                }
+                            };
+                            requestAnimationFrame(update);
+                        }
 
                         parentDoc.body.appendChild(overlay);
 
-                        // 🦅 精确到 4.18 秒后瞬间销毁！
-                        setTimeout(() => {{
-                            if(parentDoc.getElementById('sylus-fireworks')) {{
-                                parentDoc.getElementById('sylus-fireworks').remove();
-                            }}
-                        }}, 4180);
+                        // 4.18 秒后优雅淡出销毁
+                        setTimeout(() => {
+                            if(parentDoc.getElementById('sylus-fireworks')) {
+                                parentDoc.getElementById('sylus-fireworks').style.transition = 'opacity 0.5s';
+                                parentDoc.getElementById('sylus-fireworks').style.opacity = '0';
+                                setTimeout(() => parentDoc.getElementById('sylus-fireworks').remove(), 500);
+                            }
+                        }, 4180);
                     </script>
                     """,
                     height=0, width=0
