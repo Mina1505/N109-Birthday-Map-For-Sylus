@@ -338,7 +338,7 @@ with col2:
                 safe_msg = html.escape(raw_msg).replace('\n', '<br>')
                 safe_city = html.escape(lucky_hunter.get('city', '未知坐标'))
                 
-                # 🦅 终极赛博粒子爆炸引擎 + 半透明毛玻璃卡片
+                # 🦅 终极物理粒子爆炸引擎 (大范围 + 空气阻力 + 重力下落)
                 components.html(
                     f"""
                     <script>
@@ -351,7 +351,6 @@ with col2:
                         overlay.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:99999; pointer-events:none; display:flex; justify-content:center; align-items:center; overflow:hidden; background:rgba(5,2,10,0.5); backdrop-filter:blur(3px);';
                         
                         const card = parentDoc.createElement('div');
-                        // 🦅 赛博朋克半透明毛玻璃质感
                         card.style.cssText = 'background:rgba(15,5,20,0.65); backdrop-filter:blur(12px); border:1px solid rgba(255,0,77,0.5); padding:40px; border-radius:16px; box-shadow:0 0 40px rgba(255,0,77,0.4), inset 0 0 20px rgba(192,249,255,0.1); text-align:center; max-width:80%; z-index:100000; transform:scale(0); animation:popCard 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;';
                         
                         card.innerHTML = `
@@ -365,37 +364,47 @@ with col2:
                         `;
                         overlay.appendChild(card);
 
-                        // 🦅 纯粹的发光粒子爆炸系统
-                        const colors = ['#ff004d', '#c0f9ff', '#ffffff', '#ff4b4b'];
-                        for(let i=0; i<120; i++) {{
+                        // 🦅 250颗纯粹发光粒子，大范围真实物理爆炸
+                        const colors = ['#ff004d', '#c0f9ff', '#ffffff', '#ff4b4b', '#ff8a8a'];
+                        for(let i=0; i<250; i++) {{
                             const p = parentDoc.createElement('div');
-                            const size = Math.random() * 5 + 2; // 2px 到 7px 的发光点
+                            const size = Math.random() * 5 + 2; 
                             const color = colors[Math.floor(Math.random() * colors.length)];
                             
                             p.style.cssText = `position:absolute; width:${{size}}px; height:${{size}}px; background-color:${{color}}; border-radius:50%; box-shadow:0 0 ${{size*2}}px ${{color}}; z-index:99998;`;
                             
+                            // 初始位置：在卡片背后的一个大矩形区域内随机生成，让爆炸范围更广
+                            let x = window.innerWidth / 2 + (Math.random() * 300 - 150);
+                            let y = window.innerHeight / 2 + (Math.random() * 100 - 50);
+                            
+                            // 初始速度：极大的爆发力
                             const angle = Math.random() * Math.PI * 2;
-                            const velocity = Math.random() * 25 + 5; 
+                            const velocity = Math.random() * 45 + 15; 
                             let vx = Math.cos(angle) * velocity;
-                            let vy = Math.sin(angle) * velocity - 12; 
-                            let x = window.innerWidth / 2;
-                            let y = window.innerHeight / 2;
+                            let vy = Math.sin(angle) * velocity - 10; 
                             
                             p.style.left = x + 'px';
                             p.style.top = y + 'px';
                             overlay.appendChild(p);
                             
                             const update = () => {{
-                                vy += 0.6; // 重力
+                                // 物理引擎：空气阻力 (迅速减速) + 重力 (缓缓下落)
+                                vx *= 0.94; 
+                                vy *= 0.94;
+                                vy += 0.8; 
+                                
                                 x += vx;
                                 y += vy;
                                 p.style.left = x + 'px';
                                 p.style.top = y + 'px';
+                                
                                 // 粒子随下落逐渐变暗消失
                                 p.style.opacity = Math.max(0, (window.innerHeight + 100 - y) / window.innerHeight);
                                 
-                                if(y < window.innerHeight + 100) {{
+                                if(y < window.innerHeight + 100 && p.style.opacity > 0) {{
                                     requestAnimationFrame(update);
+                                }} else {{
+                                    p.remove(); // 优化性能
                                 }}
                             }};
                             requestAnimationFrame(update);
