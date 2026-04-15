@@ -80,8 +80,11 @@ st.markdown("""
     h1, h2, h3 {font-family: 'Orbitron', 'Noto Sans SC', sans-serif !important; color: #ff004d !important; text-shadow: 0 0 15px rgba(255, 0, 77, 0.8); letter-spacing: 1px;}
     .stApp {background: linear-gradient(135deg, #050208 0%, #0a0510 50%, #1a050a 100%); color: #e0d8e0;}
     
+        /* 🦅 强制黑化所有输入框和下拉菜单 */
     [data-baseweb="input"], [data-baseweb="input"] > div, [data-baseweb="input"] input,
-    [data-baseweb="textarea"], [data-baseweb="textarea"] > div, [data-baseweb="textarea"] textarea {
+    [data-baseweb="textarea"], [data-baseweb="textarea"] > div, [data-baseweb="textarea"] textarea,
+    [data-baseweb="select"] > div {
+
         background-color: rgba(21, 10, 31, 0.8) !important;
         color: #ffb3c6 !important;
         -webkit-text-fill-color: #ffb3c6 !important; 
@@ -281,10 +284,20 @@ with col2:
         name = st.text_input("猎人代号")
         city = st.text_input("所在城市 (如: 上海, 伦敦, 纽约)")
         
-        st.markdown("<span style='color:#885566; font-size:0.85em;'>*注：非省会城市无法定位，请手动输入经纬度*</span>", unsafe_allow_html=True)
-        col_lon, col_lat = st.columns(2)
-        with col_lon: manual_lon = st.number_input("备用经度", value=0.00, format="%.2f")
-        with col_lat: manual_lat = st.number_input("备用纬度", value=0.00, format="%.2f")
+                st.markdown("<span style='color:#885566; font-size:0.85em;'>*注：非省会城市无法定位，请手动输入经纬度*</span>", unsafe_allow_html=True)
+        
+        # 🦅 升级版：防呆经纬度输入（增加东西南北下拉框）
+        col_lon_dir, col_lon_val = st.columns([1, 2])
+        with col_lon_dir:
+            lon_dir = st.selectbox("经度方向", ["东经 (E)", "西经 (W)"])
+        with col_lon_val:
+            manual_lon_abs = st.number_input("经度数值", value=0.00, format="%.2f", min_value=0.0, max_value=180.0)
+            
+        col_lat_dir, col_lat_val = st.columns([1, 2])
+        with col_lat_dir:
+            lat_dir = st.selectbox("纬度方向", ["北纬 (N)", "南纬 (S)"])
+        with col_lat_val:
+            manual_lat_abs = st.number_input("纬度数值", value=0.00, format="%.2f", min_value=0.0, max_value=90.0)
             
         message = st.text_area("你想对秦彻说的话")
         submitted = st.form_submit_button("锁定并点亮坐标")
@@ -297,14 +310,11 @@ with col2:
             else:
                 final_lon, final_lat = get_coordinates(city)
                 if final_lon is None and final_lat is None:
-                    if manual_lon != 0.00 or manual_lat != 0.00:
-                        final_lon, final_lat = manual_lon, manual_lat
-                
-                if final_lon is not None and final_lat is not None:
-                    jitter_lon = random.uniform(-0.05, 0.05)
-                    jitter_lat = random.uniform(-0.05, 0.05)
-                    final_lon += jitter_lon
-                    final_lat += jitter_lat
+                    if manual_lon_abs != 0.00 or manual_lat_abs != 0.00:
+                        # 🦅 核心魔法：根据下拉框自动转换正负号！
+                        final_lon = manual_lon_abs if lon_dir == "东经 (E)" else -manual_lon_abs
+                        final_lat = manual_lat_abs if lat_dir == "北纬 (N)" else -manual_lat_abs
+
 
                     success = save_data(name, city, final_lon, final_lat, message)
                     if success:
