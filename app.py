@@ -338,7 +338,7 @@ with col2:
                 safe_msg = html.escape(raw_msg).replace('\n', '<br>')
                 safe_city = html.escape(lucky_hunter.get('city', '未知坐标'))
                 
-                # 🦅 终极物理粒子爆炸引擎 (大范围 + 空气阻力 + 重力下落)
+                # 🦅 终极赛博粒子爆炸引擎 (已修复坐标系 Bug)
                 components.html(
                     f"""
                     <script>
@@ -364,7 +364,7 @@ with col2:
                         `;
                         overlay.appendChild(card);
 
-                        // 🦅 250颗纯粹发光粒子，大范围真实物理爆炸
+                        // 🦅 250颗纯粹发光粒子，获取主屏幕真实宽高！
                         const colors = ['#ff004d', '#c0f9ff', '#ffffff', '#ff4b4b', '#ff8a8a'];
                         for(let i=0; i<250; i++) {{
                             const p = parentDoc.createElement('div');
@@ -373,11 +373,10 @@ with col2:
                             
                             p.style.cssText = `position:absolute; width:${{size}}px; height:${{size}}px; background-color:${{color}}; border-radius:50%; box-shadow:0 0 ${{size*2}}px ${{color}}; z-index:99998;`;
                             
-                            // 初始位置：在卡片背后的一个大矩形区域内随机生成，让爆炸范围更广
-                            let x = window.innerWidth / 2 + (Math.random() * 300 - 150);
-                            let y = window.innerHeight / 2 + (Math.random() * 100 - 50);
+                            // 🦅 修复：使用 window.parent.innerWidth 获取真实屏幕尺寸！
+                            let x = window.parent.innerWidth / 2 + (Math.random() * 300 - 150);
+                            let y = window.parent.innerHeight / 2 + (Math.random() * 100 - 50);
                             
-                            // 初始速度：极大的爆发力
                             const angle = Math.random() * Math.PI * 2;
                             const velocity = Math.random() * 45 + 15; 
                             let vx = Math.cos(angle) * velocity;
@@ -388,7 +387,6 @@ with col2:
                             overlay.appendChild(p);
                             
                             const update = () => {{
-                                // 物理引擎：空气阻力 (迅速减速) + 重力 (缓缓下落)
                                 vx *= 0.94; 
                                 vy *= 0.94;
                                 vy += 0.8; 
@@ -398,13 +396,14 @@ with col2:
                                 p.style.left = x + 'px';
                                 p.style.top = y + 'px';
                                 
-                                // 粒子随下落逐渐变暗消失
-                                p.style.opacity = Math.max(0, (window.innerHeight + 100 - y) / window.innerHeight);
+                                // 🦅 修复：使用 window.parent.innerHeight 计算透明度！
+                                let currentOpacity = Math.max(0, (window.parent.innerHeight + 100 - y) / window.parent.innerHeight);
+                                p.style.opacity = currentOpacity;
                                 
-                                if(y < window.innerHeight + 100 && p.style.opacity > 0) {{
+                                if(y < window.parent.innerHeight + 100 && currentOpacity > 0) {{
                                     requestAnimationFrame(update);
                                 }} else {{
-                                    p.remove(); // 优化性能
+                                    p.remove(); 
                                 }}
                             }};
                             requestAnimationFrame(update);
