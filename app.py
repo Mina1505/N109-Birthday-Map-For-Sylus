@@ -263,7 +263,7 @@ with col2:
     st.markdown("### 📡 接入N109区频段")
     with st.form("blessing_form"):
         name = st.text_input("猎人代号")
-        city = st.text_input("所在城市 (如: 上海, 伦敦, 临空市)")
+        city = st.text_input("所在城市 (如: 上海, 伦敦, 纽约)")
         
         st.markdown("<span style='color:#885566; font-size:0.85em;'>*注：非省会城市无法定位，请手动输入经纬度*</span>", unsafe_allow_html=True)
         col_lon, col_lat = st.columns(2)
