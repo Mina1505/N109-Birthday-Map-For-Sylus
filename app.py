@@ -1,4 +1,5 @@
 import base64
+import time
 import streamlit as st
 import streamlit.components.v1 as components
 from pyecharts import options as opts
@@ -18,6 +19,12 @@ def init_connection():
     return create_client(SUPABASE_URL, SUPABASE_KEY)
 
 supabase: Client = init_connection()
+
+# ==========================================
+# 🧠 注入雷达记忆模块 (用于专属高亮)
+# ==========================================
+if 'last_coord' not in st.session_state:
+    st.session_state['last_coord'] = None
 
 # ==========================================
 # 🦅 N109区专属离线坐标矩阵
@@ -43,6 +50,7 @@ def get_coordinates(city_name):
 # 🎨 N109区机车霓虹版 UI 深度定制 (终极视觉版 9.0)
 # ==========================================
 st.set_page_config(page_title="N109区点亮计划", layout="wide", initial_sidebar_state="collapsed")
+
 # ==========================================
 # 🦅 注入专属雨夜机车背景图
 # ==========================================
@@ -54,7 +62,6 @@ def set_bg_image(image_file):
             f"""
             <style>
             .stApp {{
-                /* 加上一层 80% 透明度的暗黑遮罩，保证文字清晰，同时透出雨夜质感 */
                 background: linear-gradient(rgba(10, 5, 16, 0.8), rgba(10, 5, 16, 0.85)), url(data:image/jpeg;base64,{encoded_string}) !important;
                 background-size: cover !important;
                 background-position: center !important;
@@ -69,7 +76,6 @@ def set_bg_image(image_file):
 
 set_bg_image("bg.jpg")
 
-
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+SC:wght@400;700&display=swap');
@@ -77,23 +83,20 @@ st.markdown("""
     h1, h2, h3 {font-family: 'Orbitron', 'Noto Sans SC', sans-serif !important; color: #ff004d !important; text-shadow: 0 0 15px rgba(255, 0, 77, 0.8); letter-spacing: 1px;}
     .stApp {background: linear-gradient(135deg, #050208 0%, #0a0510 50%, #1a050a 100%); color: #e0d8e0;}
     
-    /* 🦅 强制黑化所有输入框（包括备用经纬度的数字输入框） */
     [data-baseweb="input"], [data-baseweb="input"] > div, [data-baseweb="input"] input,
     [data-baseweb="textarea"], [data-baseweb="textarea"] > div, [data-baseweb="textarea"] textarea {
         background-color: rgba(21, 10, 31, 0.8) !important;
         color: #ffb3c6 !important;
-        -webkit-text-fill-color: #ffb3c6 !important; /* 修复某些浏览器的字体颜色覆盖 */
+        -webkit-text-fill-color: #ffb3c6 !important; 
         border-color: #4a1525 !important;
     }
-    /* 修复数字输入框旁边的加减按钮背景 */
     [data-baseweb="input"] button {
         background-color: rgba(255, 0, 77, 0.1) !important;
         color: #ff004d !important;
     }
     
-    /* 🦅 强制黑化表单提交按钮 */
     [data-testid="stFormSubmitButton"] button, .stButton>button {
-        background-color: rgba(20, 5, 15, 0.8) !important; /* 极暗背景，消灭白色 */
+        background-color: rgba(20, 5, 15, 0.8) !important; 
         color: #ff004d !important; 
         border: 1px solid #ff004d !important; 
         box-shadow: 0 0 10px rgba(255, 0, 77, 0.3) inset, 0 0 10px rgba(255, 0, 77, 0.3) !important; 
@@ -111,17 +114,15 @@ st.markdown("""
         transform: scale(1.02) !important;
     }
     
-    /* 🦅 信号卡片特效 (猎人代号天青色，城市名沉静蓝) */
     .signal-card {background-color: rgba(21, 10, 31, 0.8); border-left: 4px solid #ff004d; padding: 15px; margin-bottom: 15px; border-radius: 0 8px 8px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.5);}
-    .signal-header {color: #c0f9ff; font-weight: bold; font-size: 1.1em; margin-bottom: 5px;} /* 猎人代号：天青色 */
-    .signal-city {color: #68aacd; font-size: 0.85em; margin-left: 10px;} /* 城市名：沉静蓝 */
-        /* 🦅 信号电波呼吸动画 */
+    .signal-header {color: #c0f9ff; font-weight: bold; font-size: 1.1em; margin-bottom: 5px;} 
+    .signal-city {color: #68aacd; font-size: 0.85em; margin-left: 10px;} 
+    
     @keyframes signalBreathe {
         0% { opacity: 0.5; text-shadow: 0 0 2px rgba(224, 216, 224, 0.1); }
-        50% { opacity: 1.0; text-shadow: 0 0 10px rgba(192, 249, 255, 0.4); } /* 呼吸到最亮时，微微泛起天青色光晕 */
+        50% { opacity: 1.0; text-shadow: 0 0 10px rgba(192, 249, 255, 0.4); } 
         100% { opacity: 0.5; text-shadow: 0 0 2px rgba(224, 216, 224, 0.1); }
     }
-    /* 🦅 实时监听红点闪烁动画 */
     @keyframes dotBlink {
         0% { opacity: 1; box-shadow: 0 0 10px #ff004d; }
         50% { opacity: 0.2; box-shadow: 0 0 2px #ff004d; }
@@ -132,7 +133,6 @@ st.markdown("""
         color: #e0d8e0; 
         font-size: 0.95em; 
         line-height: 1.4;
-        /* 4秒一个呼吸周期，缓慢、神秘、充满压迫感 */
         animation: signalBreathe 4s infinite ease-in-out; 
     }
     .live-dot {
@@ -141,8 +141,6 @@ st.markdown("""
         animation: dotBlink 1.5s infinite ease-in-out;
     }
 
-    
-    /* BGM 播放器终极全息隐身术 */
     [data-testid="stAudio"] {
         background: linear-gradient(90deg, rgba(255, 0, 77, 0.15) 0%, rgba(21, 10, 31, 0.6) 50%, rgba(192, 249, 255, 0.15) 100%) !important;
         border: 1px solid rgba(255, 0, 77, 0.4) !important;
@@ -154,43 +152,32 @@ st.markdown("""
     audio {color-scheme: dark !important; opacity: 0.85; outline: none;}
     
     #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
-        /* ========================================= */
-    /* 🦅 强制修改输入框提示词为天青色发光效果 */
-    /* ========================================= */
+    
     .stTextInput label p, .stTextArea label p, .stNumberInput label p {
-        color: #c0f9ff !important; /* 天青色 */
-        text-shadow: 0 0 8px rgba(192, 249, 255, 0.6) !important; /* 微微发光特效 */
+        color: #c0f9ff !important; 
+        text-shadow: 0 0 8px rgba(192, 249, 255, 0.6) !important; 
         font-weight: bold !important;
         letter-spacing: 1px !important;
     }
-    /* ========================================= */
-    /* 📱 N109区移动端专属雷达适配 (Mobile UI) */
-    /* ========================================= */
+    
     @media (max-width: 768px) {
         h1 { font-size: 1.8rem !important; text-align: center; }
         h3 { font-size: 1.3rem !important; text-align: center; }
-        /* 修复部分手机浏览器背景图固定失效的问题 */
         .stApp { background-attachment: scroll !important; } 
-        /* 让音乐播放器在手机上居中且占满宽度 */
         [data-testid="stAudio"] { width: 100% !important; margin: 0 auto 20px auto !important; }
-        /* 手机端信号卡片稍微紧凑一点 */
         .signal-card { padding: 10px; margin-bottom: 10px; }
     }
-
-
     </style>
 """, unsafe_allow_html=True)
 
 st.title("🏍️ N109区点亮计划")
 
-# 🦅 专属 BGM 播放器 (修复云端断连Bug)
+# 🦅 专属 BGM 播放器
 try:
-    # 强制把音乐读进内存，彻底解决云端 not connected 报错！
     with open("bgm.mp3", "rb") as f:
         audio_bytes = f.read()
     st.audio(audio_bytes, format="audio/mpeg", loop=True)
     
-    # 🦅 N109区底层控制指令：强制将初始音量设为 50%
     components.html(
         """
         <script>
@@ -207,8 +194,6 @@ try:
     )
 except Exception as e:
     st.warning(f"⚠️ BGM 加载失败: {e}")
-
-
 
 def fetch_data():
     try:
@@ -229,29 +214,44 @@ def save_data(name, city, lon, lat, message):
         st.error(f"⚠️ 数据库写入失败: {e}")
         return False
 
-# --- Pyecharts 赤红呼吸灯地图 (灰蓝底色 + 天青色悬停版) ---
+# --- Pyecharts 赤红呼吸灯地图 (双层特效升级版) ---
 def render_map(data_list):
     geo = (
         Geo(init_opts=opts.InitOpts(width="100%", height="500px", theme=ThemeType.DARK, bg_color="transparent"))
         .add_schema(
             maptype="world",
-            # 🦅 注入主控猎人的神级调色：灰蓝底色 + 沉静蓝描边！
             itemstyle_opts=opts.ItemStyleOpts(area_color="#374260", border_color="#68aacd"),
-            # 悬停时依然是绝美的天青色爆闪！
             emphasis_itemstyle_opts=opts.ItemStyleOpts(area_color="#c0f9ff") 
         )
     )
+    
+    normal_pair = []
+    highlight_pair = []
+    last_coord = st.session_state.get('last_coord')
+
     if data_list:
-        data_pair = []
         for i, item in enumerate(data_list):
+            lon = item.get('longitude', 0)
+            lat = item.get('latitude', 0)
             unique_city_id = f"{item.get('city', 'Unknown')}_{i}"
-            geo.add_coordinate(unique_city_id, item.get('longitude', 0), item.get('latitude', 0))
-            data_pair.append((unique_city_id, 1))
+            geo.add_coordinate(unique_city_id, lon, lat)
             
-        geo.add("乌鸦芯片定位", data_pair, type_=ChartType.EFFECT_SCATTER, symbol_size=10, color="#ff004d", effect_opts=opts.EffectOpts(is_show=True, brush_type="stroke", scale=4, period=2.5), label_opts=opts.LabelOpts(is_show=False))
+            # 🦅 核心魔法：判断是不是刚刚发送的专属坐标
+            if last_coord and abs(lon - last_coord[0]) < 0.0001 and abs(lat - last_coord[1]) < 0.0001:
+                highlight_pair.append((unique_city_id, 1))
+            else:
+                normal_pair.append((unique_city_id, 1))
+                
+        # 第一层：普通猎人的暗红星团
+        if normal_pair:
+            geo.add("乌鸦芯片定位", normal_pair, type_=ChartType.EFFECT_SCATTER, symbol_size=8, color="#ff004d", effect_opts=opts.EffectOpts(is_show=True, brush_type="stroke", scale=3, period=2.5), label_opts=opts.LabelOpts(is_show=False))
+        
+        # 第二层：你的专属银白锁定 (超大涟漪)
+        if highlight_pair:
+            geo.add("🎯 专属锁定", highlight_pair, type_=ChartType.EFFECT_SCATTER, symbol_size=18, color="#C0C0C0", effect_opts=opts.EffectOpts(is_show=True, brush_type="stroke", scale=6, period=1.5), label_opts=opts.LabelOpts(is_show=False))
+            
     geo.set_global_opts(title_opts=opts.TitleOpts(title="🎯 全球雷达响应", pos_left="center", title_textstyle_opts=opts.TextStyleOpts(color="#ff004d")))
     return geo.render_embed()
-
 
 # --- 页面布局 ---
 col1, col2 = st.columns([2, 1])
@@ -295,34 +295,62 @@ with col2:
 
                     success = save_data(name, city, final_lon, final_lat, message)
                     if success:
-                        # 🦅 彻底抛弃默认的绿色提示，换成天青色全息投影框！
+                        # 记录专属坐标
+                        st.session_state['last_coord'] = (final_lon, final_lat)
+                        
                         st.markdown(f"""
                         <div style="background: rgba(21, 10, 31, 0.8); border: 1px solid #c0f9ff; border-left: 4px solid #c0f9ff; padding: 15px; border-radius: 4px; box-shadow: 0 0 15px rgba(192, 249, 255, 0.2); margin-bottom: 15px;">
                             <span style="color: #c0f9ff; font-weight: bold; font-size: 1.1em;">🛰️ 信号接入成功！</span><br>
-                            <span style="color: #e0d8e0; font-size: 0.95em;">猎人 <span style="color: #ff004d; font-weight: bold;">{name}</span>，坐标已锁定！请刷新页面查看！</span>
+                            <span style="color: #e0d8e0; font-size: 0.95em;">猎人 <span style="color: #ff004d; font-weight: bold;">{name}</span>，坐标已锁定！雷达正在重启...</span>
                         </div>
                         """, unsafe_allow_html=True)
+                        
+                        # 🦅 强制瞬间刷新网页，让银色高亮立刻出现！
+                        time.sleep(1.5)
+                        st.rerun()
                 else:
                     st.error(f"❌ 乌鸦矩阵未收录【{city}】！请手动输入经纬度！")
 
-# 🦅 底部信号瀑布流展示区
+# ==========================================
+# 🦅 底部：暗网加密终端 (固定高度滚动舱)
+# ==========================================
 st.markdown("---")
-st.markdown('### <span class="live-dot"></span>截获的猎人小姐信号 (实时)', unsafe_allow_html=True)
-
+st.markdown('### <span class="live-dot"></span>N109区机密档案终端 (实时拦截)', unsafe_allow_html=True)
 
 if blessings_data:
-    display_data = blessings_data[:12] 
-    cols = st.columns(3)
-    for i, item in enumerate(display_data):
-        with cols[i % 3]:
-            st.markdown(f"""
-            <div class="signal-card">
-                <div class="signal-header">
-                    {item.get('name', '未知猎人')} 
-                    <span class="signal-city">📍 {item.get('city', '未知坐标')}</span>
-                </div>
-                <div class="signal-msg">"{item.get('message', '发送了一段加密信号...')}"</div>
+    # 注入终端专属 CSS (带暗红滚动条)
+    terminal_html = """
+    <style>
+    .cyber-terminal::-webkit-scrollbar { width: 6px; }
+    .cyber-terminal::-webkit-scrollbar-track { background: rgba(10, 5, 16, 0.8); }
+    .cyber-terminal::-webkit-scrollbar-thumb { background: #ff004d; border-radius: 3px; }
+    .cyber-terminal {
+        height: 450px; 
+        overflow-y: auto; 
+        border: 1px solid #4a1525; 
+        background: rgba(15, 5, 20, 0.7); 
+        padding: 20px; 
+        border-radius: 8px; 
+        box-shadow: inset 0 0 30px rgba(255, 0, 77, 0.1);
+    }
+    </style>
+    <div class="cyber-terminal">
+    """
+    
+    # 把所有留言塞进终端里
+    for item in blessings_data:
+        terminal_html += f"""
+        <div class="signal-card" style="margin-bottom: 15px;">
+            <div class="signal-header">
+                {item.get('name', '未知猎人')} 
+                <span class="signal-city">📍 {item.get('city', '未知坐标')}</span>
             </div>
-            """, unsafe_allow_html=True)
+            <div class="signal-msg">"{item.get('message', '发送了一段加密信号...')}"</div>
+        </div>
+        """
+    terminal_html += "</div>"
+    
+    # 渲染终端
+    st.markdown(terminal_html, unsafe_allow_html=True)
 else:
     st.markdown("<p style='color:#885566;'>当前频段安静，等待第一位猎人接入...</p>", unsafe_allow_html=True)
